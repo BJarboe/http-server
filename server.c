@@ -13,7 +13,9 @@
 #define PORT 8080
 
 int main() {
-    /*  Socket - sockaddr_in
+    /*  Usefule man pages:
+        Socket
+        sockaddr_in
         htons
         Bind
         Listen

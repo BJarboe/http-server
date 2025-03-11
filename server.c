@@ -12,8 +12,12 @@
 
 #define PORT 8080
 
+// for multithread functionality
+void handle_client(int client_fd);
+
+
 int main() {
-    /*  Usefule man pages:
+    /*  Useful man pages:
         Socket
         sockaddr_in
         htons
@@ -28,6 +32,8 @@ int main() {
     */
     setbuf(stdout, NULL); // erase buffer for stdout
 
+    printf("Initializing..\n");
+
     // fd -> file descriptor
     // AF_INET -> IPv4 family
     // SOCK_STREAM -> TCP
@@ -37,8 +43,8 @@ int main() {
         printf("Server creation failed: %s...\n", strerror(errno));
     }
 
-    // htons -> converts values between host and network byte order (8080 = 0x1f90 --htons-> 0x901f)
-    // htons for short, htonl for long
+    // htons -> host to network, short (8080 = 0x1f90 --htons-> 0x901f)
+    // htonl for long
     // INADDR_ANY -> accepts any incoming messages (0x00000000)
     struct sockaddr_in addr = {
         .sin_family = AF_INET, 
@@ -73,24 +79,43 @@ int main() {
         return -1;
     }
 
-    int client_fd = accept(server_fd, 0, 0);
-    char buffer[256] = {0};
-    recv(client_fd, buffer, 256, 0);
+    while (1) {
+        printf("Server on standbye..\n");
 
-    /* request format:  
-        GET /filename 
-        _____--------_
-        skip   read  trailing whitespace
-    */
-    //           skip first 5 bytes/chars "GET /"..
-    char* file = buffer + 5;
+        struct sockaddr_in client_addr;
+        int client_addr_len = sizeof(client_addr);
+        
+        int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len);
+        if (client_fd == -1) {
+            printf("Failed to connect.. %s\n", strerror(errno));
+            return 1;
+        }
 
-    // convert trailing whitespace into null terminator
-    *strchr(file, ' ') = 0;
+        printf("Client Connection Success!\n");
 
-    int opened_fd = open(file, O_RDONLY);
-    sendfile(client_fd, opened_fd, 0, 256);
-    close(opened_fd);
-    close(client_fd);
-    close(server_fd);
+        // fork -> pid_t    duplicates the calling process
+        // returns PID of parrent, 0 to child on success, -1 on failure
+        if (!fork()) {
+            close(server_fd);
+            handle_connection(client_fd);
+            close(client_fd);
+            return 0;
+        }
+        close(client_fd);
+        return 0;
+    }
+}
+
+
+void handle_connection(int client_fd) {
+    /**recv() client data and store it in a buffer
+     * return the message length in bytes, -1 otherwise
+     * 
+     * Parse the request
+     *      "GET /this/path HTTP/1.1..."
+     * method ^     
+     * the path will indicate which resource the client is requesting
+     * 
+     * depending on the parse, send() the appropriate resource and return
+     */
 }

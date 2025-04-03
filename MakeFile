@@ -11,7 +11,7 @@ FLAGS=-o
 
 PROGRAM = server
 
-all : 
+all: 
 	$(COMPILER) $(PROGRAM).c $(FLAGS) $(PROGRAM)
 
 

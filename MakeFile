@@ -1,0 +1,19 @@
+# Rules format:
+# target : dependency1 dependency2 ... dependencyN
+#     Command to make target, uses default rules if not specified
+
+# First target is the one executed if you just type make
+# $^ is an example of a special variable.  It substitutes all dependencies
+
+COMPILER=gcc
+
+FLAGS=-o
+
+PROGRAM = server
+
+all : 
+	$(COMPILER) $(PROGRAM).c $(FLAGS) $(PROGRAM)
+
+
+clean :
+	rm -f *.o $(PROGRAM)

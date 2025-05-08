@@ -148,15 +148,35 @@ void handle_connection(int client_fd) {
     }
     // Echo
     else if (strncmp(reqPath, "/echo/", 6) == 0) {
-        reqPath = strtok(reqPath, "/");
-        reqPath = strtok(NULL, "");
-        int contentLength = strlen(reqPath);
+    	reqPath = strtok(reqPath, "/");
+    	reqPath = strtok(NULL, "");
 
-        char response[512];
-        sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", contentLength, reqPath);
-        printf("Sending response..\n");
-        bytesSent = send(client_fd, response, strlen(response), 0);
-    }
+    	if (reqPath == NULL) reqPath = "";
+    	int contentLength = strlen(reqPath);
+
+    	// Truncate if too long
+    	if (contentLength > MAX_ECHO_SIZE) {
+		contentLength = MAX_ECHO_SIZE;
+    	}
+
+    	char truncatedContent[MAX_ECHO_SIZE + 1];
+    	strncpy(truncatedContent, reqPath, contentLength);
+    	truncatedContent[contentLength] = '\0';
+
+    	char response[MAX_RESPONSE_SIZE];
+    	int bytesWritten = snprintf(
+		response, sizeof(response),
+		"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s",
+		contentLength, truncatedContent
+    	);
+
+    	if (bytesWritten >= sizeof(response)) {
+        	fprintf(stderr, "Response too large to send safely.\n");
+    	} else {
+        	printf("Sending response..\n");
+        	bytesSent = send(client_fd, response, bytesWritten, 0);
+    	}
+    } 
     // User Agent
     else if (strcmp(reqPath, "/user-agent/") == 0) {
 

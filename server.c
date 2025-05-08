@@ -14,6 +14,9 @@
 
 #define PORT 8080
 
+#define MAX_RESPONSE_SIZE 512
+#define MAX_ECHO_SIZE 400
+
 void handle_connection(int client_fd);
 
 int main() {
